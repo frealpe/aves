@@ -1,12 +1,12 @@
 import React from 'react';
 import { View, StyleSheet, StatusBar } from 'react-native';
-import ARWebSocketView from './views/ARWebSocketView';
+import ARView from './views/ARView';
 
 const App = () => {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" />
-            <ARWebSocketView />
+            <ARView />
         </View>
     );
 };

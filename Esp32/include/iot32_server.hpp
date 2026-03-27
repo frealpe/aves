@@ -459,7 +459,7 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
                AwsEventType type, void *arg, uint8_t *data, size_t len) {
   if (type == WS_EVT_CONNECT) {
     log("[ WS ] Cliente conectado ID: " + String(client->id()));
-    client->text("{\"t\":\"info\",\"v\":\"Conectado al ESP32 AR Bridge\"}");
+    client->text("{\"type\":\"info\",\"source\":\"esp32\",\"target\":\"mobile\",\"action\":\"connected\",\"payload\":{\"message\":\"Conectado al ESP32 AR Bridge\"},\"timestamp\":" + String(millis()) + "}");
   } else if (type == WS_EVT_DISCONNECT) {
     log("[ WS ] Cliente desconectado");
   } else if (type == WS_EVT_DATA) {
@@ -475,28 +475,40 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
       if (error)
         return;
 
-      String type = doc["t"];
-      if (type == "anim") {
-        String anim_type = doc["v"];
-        log("[ WS ] Trigger animación: " + anim_type);
-        // Aquí llamaríamos a funciones de lv_mascot.hpp para cambiar la
-        // animación
-      } else if (type == "control") {
-        String control_type = doc["v"];
-        log("[ WS ] Trigger control: " + control_type);
-        if (control_type == "GET_TELEMETRY") {
+      String msgType = doc["type"];
+      String action = doc["action"];
+
+      if (msgType == "event") {
+        if (action == "led_on") {
+          log("[ WS ] Action: led_on");
+          setOnSingle(APLED);
+        } else if (action == "led_off") {
+          log("[ WS ] Action: led_off");
+          setOffSingle(APLED);
+        } else if (action == "GET_TELEMETRY") {
+          log("[ WS ] Trigger control: GET_TELEMETRY");
           StaticJsonDocument<256> telemetry_doc;
-          telemetry_doc["t"] = "data";
-          JsonObject v = telemetry_doc.createNestedObject("v");
-          v["bat"] = map(analogRead(34), 0, 4095, 0, 100);
-          v["signal"] = WiFi.RSSI();
-          v["free_heap"] = ESP.getFreeHeap();
-          v["heap_size"] = ESP.getHeapSize();
-          v["uptime"] = millis();
+          telemetry_doc["type"] = "event";
+          telemetry_doc["source"] = "esp32";
+          telemetry_doc["target"] = "mobile";
+          telemetry_doc["action"] = "telemetry_data";
+          telemetry_doc["timestamp"] = millis();
+          JsonObject payload = telemetry_doc.createNestedObject("payload");
+          payload["bat"] = map(analogRead(34), 0, 4095, 0, 100);
+          payload["signal"] = WiFi.RSSI();
+          payload["free_heap"] = ESP.getFreeHeap();
+          payload["heap_size"] = ESP.getHeapSize();
+          payload["uptime"] = millis();
 
           String telemetry_output;
           serializeJson(telemetry_doc, telemetry_output);
           client->text(telemetry_output);
+        } else {
+            // handle avatar anim events via log for now
+            String target = doc["target"];
+            if (target == "avatar") {
+                 log("[ WS ] Trigger avatar animación: " + action);
+            }
         }
       }
     }
@@ -508,13 +520,18 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 // -------------------------------------------------------------------
 void broadcastSystemStatus() {
   StaticJsonDocument<256> doc;
-  doc["t"] = "data";
-  JsonObject v = doc.createNestedObject("v");
-  v["bat"] = map(analogRead(34), 0, 4095, 0, 100);
-  v["signal"] = WiFi.RSSI();
-  v["free_heap"] = ESP.getFreeHeap();
-  v["heap_size"] = ESP.getHeapSize();
-  v["uptime"] = millis();
+  doc["type"] = "event";
+  doc["source"] = "esp32";
+  doc["target"] = "mobile";
+  doc["action"] = "telemetry_data";
+  doc["timestamp"] = millis();
+
+  JsonObject payload = doc.createNestedObject("payload");
+  payload["bat"] = map(analogRead(34), 0, 4095, 0, 100);
+  payload["signal"] = WiFi.RSSI();
+  payload["free_heap"] = ESP.getFreeHeap();
+  payload["heap_size"] = ESP.getHeapSize();
+  payload["uptime"] = millis();
 
   String output;
   serializeJson(doc, output);

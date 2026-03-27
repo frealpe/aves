@@ -29,10 +29,11 @@ export const useWebSocket = (url) => {
         ws.onmessage = (event) => {
             try {
                 const message = JSON.parse(event.data);
-                if (message.t === 'info') {
-                    setInfo(message.v);
-                } else if (message.t === 'data') {
-                    setTelemetry(message.v);
+                // Nuevo protocolo: { type, source, target, action, payload, timestamp }
+                if (message.type === 'info') {
+                    setInfo(message.payload?.message || JSON.stringify(message));
+                } else if (message.type === 'event' && message.action === 'telemetry_data') {
+                    setTelemetry(message.payload);
                 }
             } catch (error) {
                 console.error('Error procesando mensaje:', error);
@@ -57,6 +58,22 @@ export const useWebSocket = (url) => {
         wsRef.current = ws;
     }, [url]);
 
+    const sendMessage = useCallback((type, source, target, action, payload = {}) => {
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            const msg = {
+                type,
+                source,
+                target,
+                action,
+                payload,
+                timestamp: Date.now()
+            };
+            wsRef.current.send(JSON.stringify(msg));
+        } else {
+            console.warn('No se puede enviar mensaje, el socket no está conectado.');
+        }
+    }, []);
+
     useEffect(() => {
         if (url) {
             connect();
@@ -69,21 +86,29 @@ export const useWebSocket = (url) => {
         };
     }, [connect, url]);
 
-    const sendMessage = useCallback((type, value) => {
-        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-            const payload = JSON.stringify({ t: type, v: value });
-            wsRef.current.send(payload);
-        } else {
-            console.warn('No se puede enviar mensaje, el socket no está conectado.');
+    // Heartbeat cada 5 segundos
+    useEffect(() => {
+        let heartbeatInterval;
+        if (isConnected) {
+            heartbeatInterval = setInterval(() => {
+                sendMessage('event', 'mobile', 'device', 'heartbeat', {});
+            }, 5000);
         }
-    }, []);
+        return () => {
+            if (heartbeatInterval) clearInterval(heartbeatInterval);
+        };
+    }, [isConnected, sendMessage]);
 
     const sendAnimation = useCallback((animType) => {
-        sendMessage('anim', animType);
+        sendMessage('event', 'mobile', 'avatar', animType, {});
     }, [sendMessage]);
 
     const requestTelemetry = useCallback(() => {
-        sendMessage('control', 'GET_TELEMETRY');
+        sendMessage('event', 'mobile', 'device', 'GET_TELEMETRY', {});
+    }, [sendMessage]);
+
+    const controlLed = useCallback((on) => {
+        sendMessage('event', 'mobile', 'device', on ? 'led_on' : 'led_off', {});
     }, [sendMessage]);
 
     return {
@@ -93,5 +118,6 @@ export const useWebSocket = (url) => {
         sendMessage,
         sendAnimation,
         requestTelemetry,
+        controlLed
     };
 };
