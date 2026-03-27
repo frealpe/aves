@@ -23,9 +23,9 @@ const Index = () => {
     } = useIndex()
 
     return (
-        <CContainer fluid className="px-2">
+        <div className="px-2">
             {/* Top stat cards */}
-            <div className="row g-2 mb-2 mt-1">
+            <div className="row g-2 mb-2">
                 <div className="col-md-6 col-xl-3">
                     <CCard className="text-white bg-primary h-100">
                         <CCardBody className="d-flex align-items-center justify-content-between p-2">
@@ -209,7 +209,7 @@ const Index = () => {
                     </CCard>
                 </div>
             </div>
-        </CContainer>
+        </div>
     )
 }
 
