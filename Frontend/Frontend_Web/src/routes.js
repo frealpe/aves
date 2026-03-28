@@ -1,7 +1,11 @@
 import React from 'react'
 
 const Dispositivos = React.lazy(() => import('./views/control/Dispositivos'))
-const Monitor     = React.lazy(() => import('./views/monitor/Monitor'))
+const IotDashboard = React.lazy(() => import('./views/iot/Dashboard'))
+const IotDeviceControl = React.lazy(() => import('./views/iot/DeviceControl'))
+const AdminUsers = React.lazy(() => import('./views/admin/Users'))
+const AdminServices = React.lazy(() => import('./views/admin/Services'))
+const Monitor = React.lazy(() => import('./views/monitor/Monitor'))
 const Trayectorias = React.lazy(() => import('./views/control/Trayectorias'))
 const Agent = React.lazy(() => import('./views/control/Agent'))
 const Analitica = React.lazy(() => import('./views/analitica/Analitica'))
@@ -49,7 +53,31 @@ const routes = [
     name: 'Mediciones',
     element: Mediciones,
     exact: true,
-  }
+  },
+  {
+    path: '/iot/dashboard',
+    name: 'IoT Dashboard',
+    element: IotDashboard,
+    exact: true,
+  },
+  {
+    path: '/iot/control',
+    name: 'IoT Control',
+    element: IotDeviceControl,
+    exact: true,
+  },
+  {
+    path: '/admin/users',
+    name: 'Users',
+    element: AdminUsers,
+    exact: true,
+  },
+  {
+    path: '/admin/services',
+    name: 'Services',
+    element: AdminServices,
+    exact: true,
+  },
 ]
 
 export default routes

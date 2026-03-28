@@ -1,9 +1,8 @@
 export const getEnvVariables = () => {
+  import.meta.env
 
-    import.meta.env;
-
-    return {
-         ...import.meta.env
-        //VITE_CESIUM_TOKEN: import.meta.env.VITE_CESIUM_TOKEN,
-    }
+  return {
+    ...import.meta.env,
+    //VITE_CESIUM_TOKEN: import.meta.env.VITE_CESIUM_TOKEN,
+  }
 }

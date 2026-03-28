@@ -1,4 +1,5 @@
-import {AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
+import React from 'react'
+import { AppContent, AppSidebar, AppFooter, AppHeader } from '../components/index'
 // import FloatingSidebar from '../components/sidebar/floatingSidebar'
 
 const DefaultLayout = () => {

@@ -1,3 +1,4 @@
+import React from 'react'
 import CIcon from '@coreui/icons-react'
 import { cilMonitor, cilDevices, cilGrid, cilChartLine, cilSpeedometer } from '@coreui/icons'
 import { CNavItem } from '@coreui/react-pro'

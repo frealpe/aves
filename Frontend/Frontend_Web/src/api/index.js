@@ -1,3 +1,1 @@
-
-
-export * as iotApi from './iotApi';
+export * as iotApi from './iotApi'

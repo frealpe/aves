@@ -1,54 +1,54 @@
-import { useState, useRef, useEffect } from 'react';
-import AgentService from '../../service/control/agent.service';
+import { useState, useRef, useEffect } from 'react'
+import AgentService from '../../service/control/agent.service'
 
 export const useAgent = () => {
-    const [messages, setMessages] = useState([
-        { sender: 'agent', text: 'Hola, soy tu IA de control. ¿A dónde quieres enviar los drones?' }
-    ]);
-    const [input, setInput] = useState('');
-    const [loading, setLoading] = useState(false);
-    
-    // Referencia para hacer scroll al último mensaje
-    const endOfMessagesRef = useRef(null);
+  const [messages, setMessages] = useState([
+    { sender: 'agent', text: 'Hola, soy tu IA de control. ¿A dónde quieres enviar los drones?' },
+  ])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
 
-    const scrollToBottom = () => {
-        endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' });
-    };
+  // Referencia para hacer scroll al último mensaje
+  const endOfMessagesRef = useRef(null)
 
-    useEffect(() => {
-        scrollToBottom();
-    }, [messages]);
+  const scrollToBottom = () => {
+    endOfMessagesRef.current?.scrollIntoView({ behavior: 'smooth' })
+  }
 
-    const handleSend = async () => {
-        if (!input.trim()) return;
+  useEffect(() => {
+    scrollToBottom()
+  }, [messages])
 
-        const userMessage = input.trim();
-        setMessages(prev => [...prev, { sender: 'user', text: userMessage }]);
-        setInput('');
-        setLoading(true);
+  const handleSend = async () => {
+    if (!input.trim()) return
 
-        const response = await AgentService.sendChatMessage(userMessage);
+    const userMessage = input.trim()
+    setMessages((prev) => [...prev, { sender: 'user', text: userMessage }])
+    setInput('')
+    setLoading(true)
 
-        if (response.ok && response.data.currentStatus === 'success') {
-            setMessages(prev => [...prev, { sender: 'agent', text: response.data.response }]);
-        } else {
-            setMessages(prev => [...prev, { sender: 'agent', text: `Error: ${response.error}` }]);
-        }
+    const response = await AgentService.sendChatMessage(userMessage)
 
-        setLoading(false);
-    };
+    if (response.ok && response.data.currentStatus === 'success') {
+      setMessages((prev) => [...prev, { sender: 'agent', text: response.data.response }])
+    } else {
+      setMessages((prev) => [...prev, { sender: 'agent', text: `Error: ${response.error}` }])
+    }
 
-    const handleKeyPress = (e) => {
-        if (e.key === 'Enter') handleSend();
-    };
+    setLoading(false)
+  }
 
-    return {
-        messages,
-        input,
-        setInput,
-        loading,
-        handleSend,
-        handleKeyPress,
-        endOfMessagesRef
-    };
-};
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') handleSend()
+  }
+
+  return {
+    messages,
+    input,
+    setInput,
+    loading,
+    handleSend,
+    handleKeyPress,
+    endOfMessagesRef,
+  }
+}

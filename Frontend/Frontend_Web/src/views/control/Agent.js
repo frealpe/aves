@@ -1,4 +1,4 @@
-import React from 'react';
+import React from 'react'
 import {
   CCard,
   CCardBody,
@@ -10,22 +10,15 @@ import {
   CInputGroup,
   CListGroup,
   CListGroupItem,
-  CSpinner
-} from '@coreui/react-pro';
-import CIcon from '@coreui/icons-react';
-import { cilSend } from '@coreui/icons';
-import { useAgent } from '../../hook/control/useAgent';
+  CSpinner,
+} from '@coreui/react-pro'
+import CIcon from '@coreui/icons-react'
+import { cilSend } from '@coreui/icons'
+import { useAgent } from '../../hook/control/useAgent'
 
 const Agent = () => {
-  const {
-    messages,
-    input,
-    setInput,
-    loading,
-    handleSend,
-    handleKeyPress,
-    endOfMessagesRef
-  } = useAgent();
+  const { messages, input, setInput, loading, handleSend, handleKeyPress, endOfMessagesRef } =
+    useAgent()
 
   return (
     <CRow className="justify-content-center">
@@ -38,11 +31,11 @@ const Agent = () => {
             <div className="flex-grow-1 overflow-auto mb-3 p-3 bg-light rounded">
               <CListGroup flush>
                 {messages.map((msg, idx) => (
-                  <CListGroupItem 
-                    key={idx} 
+                  <CListGroupItem
+                    key={idx}
                     className={`border-0 bg-transparent d-flex ${msg.sender === 'user' ? 'justify-content-end' : 'justify-content-start'}`}
                   >
-                    <div 
+                    <div
                       className={`p-2 rounded-3 text-white ${msg.sender === 'user' ? 'bg-primary' : 'bg-secondary'}`}
                       style={{ maxWidth: '80%', wordWrap: 'break-word' }}
                     >
@@ -59,7 +52,7 @@ const Agent = () => {
               )}
             </div>
             <CInputGroup>
-              <CFormInput 
+              <CFormInput
                 placeholder="Ej. Haz que el drone Slave_D8 vuele a 1, 2, 0"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -74,7 +67,7 @@ const Agent = () => {
         </CCard>
       </CCol>
     </CRow>
-  );
-};
+  )
+}
 
-export default Agent;
+export default Agent

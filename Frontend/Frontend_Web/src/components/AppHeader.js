@@ -20,9 +20,8 @@ import { cilContrast, cilMenu, cilMoon, cilSun, cilLanguage, cifGb, cifEs } from
 import { AppHeaderDropdown } from './header/index'
 import { SocketContext } from '../context/SocketContext'
 
-
 const AppHeader = () => {
-  const headerRef = useRef()  // Crea una referencia para el encabezado
+  const headerRef = useRef() // Crea una referencia para el encabezado
 
   // Hook para manejar el modo de color con un tema predeterminado
   const { colorMode, setColorMode } = useColorModes('coreui-pro-react-admin-template-theme-light')
@@ -30,9 +29,9 @@ const AppHeader = () => {
   // Hook para traducción
   const { i18n, t } = useTranslation()
 
-  const dispatch = useDispatch()  // Hook para enviar acciones a Redux
-  const asideShow = useSelector((state) => state.asideShow)  // Obtiene el estado del aside
-  const sidebarShow = useSelector((state) => state.sidebarShow)  // Obtiene el estado del sidebar
+  const dispatch = useDispatch() // Hook para enviar acciones a Redux
+  const asideShow = useSelector((state) => state.asideShow) // Obtiene el estado del aside
+  const sidebarShow = useSelector((state) => state.sidebarShow) // Obtiene el estado del sidebar
 
   useEffect(() => {
     // Agrega un evento para cambiar la sombra del header al hacer scroll
@@ -40,28 +39,29 @@ const AppHeader = () => {
       headerRef.current &&
         headerRef.current.classList.toggle('shadow-sm', document.documentElement.scrollTop > 0)
     })
-  }, [])  // Se ejecuta una sola vez al montar el componente
+  }, []) // Se ejecuta una sola vez al montar el componente
 
   const { online } = useContext(SocketContext)
 
   return (
-    <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>  {/* Encabezado fijo con padding 0 */}
-      <CContainer className="border-bottom px-4" fluid>  {/* Contenedor con borde inferior y padding horizontal */}
-
+    <CHeader position="sticky" className="mb-4 p-0" ref={headerRef}>
+      {' '}
+      {/* Encabezado fijo con padding 0 */}
+      <CContainer className="border-bottom px-4" fluid>
+        {' '}
+        {/* Contenedor con borde inferior y padding horizontal */}
         {/* Botón para alternar la visibilidad del sidebar */}
         <CHeaderToggler
           onClick={() => dispatch({ type: 'set', sidebarShow: !sidebarShow })}
-          style={{ marginInlineStart: '-14px' }}  // Ajusta el margen izquierdo
+          style={{ marginInlineStart: '-14px' }} // Ajusta el margen izquierdo
         >
-          <CIcon icon={cilMenu} size="lg" />  {/* Icono de menú */}
+          <CIcon icon={cilMenu} size="lg" /> {/* Icono de menú */}
         </CHeaderToggler>
         <div className="d-flex align-items-center flex-wrap">
           <span className={`ms-3 fw-bold ${online ? 'text-success' : 'text-danger'}`}>
             🦋 Bionic Butterfly {online ? 'Online' : 'Offline'}
           </span>
-
         </div>
-        
         {/* Barra de navegación dentro del encabezado */}
         <CHeaderNav className="ms-auto ms-md-0">
           {/* Separador vertical */}
@@ -71,8 +71,10 @@ const AppHeader = () => {
 
           {/* Menú desplegable para seleccionar el idioma */}
           <CDropdown variant="nav-item" placement="bottom-end">
-            <CDropdownToggle caret={false}>  {/* Botón sin flecha */}
-              <CIcon icon={cilLanguage} size="lg" />  {/* Icono de idioma */}
+            <CDropdownToggle caret={false}>
+              {' '}
+              {/* Botón sin flecha */}
+              <CIcon icon={cilLanguage} size="lg" /> {/* Icono de idioma */}
             </CDropdownToggle>
             <CDropdownMenu>
               {/* Opción para cambiar a inglés */}
@@ -84,7 +86,7 @@ const AppHeader = () => {
               >
                 <CIcon className="me-2" icon={cifGb} size="lg" /> English
               </CDropdownItem>
-              
+
               {/* Opción para cambiar a español */}
               <CDropdownItem
                 active={i18n.language === 'es'}
@@ -98,7 +100,7 @@ const AppHeader = () => {
           </CDropdown>
 
           {/* Menú desplegable para cambiar el modo de color */}
-          <CDropdown variant="nav-item" placement="bottom-end">            
+          <CDropdown variant="nav-item" placement="bottom-end">
             <CDropdownToggle caret={false}>
               {/* Muestra el icono según el modo de color actual */}
               {colorMode === 'dark' ? (
@@ -132,7 +134,7 @@ const AppHeader = () => {
               >
                 <CIcon className="me-2" icon={cilMoon} size="lg" /> {t('dark')}
               </CDropdownItem>
-              
+
               {/* Opción para cambiar al modo automático */}
               <CDropdownItem
                 active={colorMode === 'auto'}
@@ -153,10 +155,10 @@ const AppHeader = () => {
 
           {/* Menú de usuario */}
           <AppHeaderDropdown />
-        </CHeaderNav>     
+        </CHeaderNav>
       </CContainer>
     </CHeader>
   )
 }
 
-export default AppHeader  // Exporta el componente para su uso en otros archivos
+export default AppHeader // Exporta el componente para su uso en otros archivos

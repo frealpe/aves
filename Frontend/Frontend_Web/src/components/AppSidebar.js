@@ -15,10 +15,8 @@ import {
 import { AppSidebarNav } from './AppSidebarNav'
 import { SocketContext } from '../context/SocketContext'
 
-
 // sidebar nav config
 import navigation from '../_nav'
-
 
 import './AppSidebar.css'
 
@@ -27,7 +25,11 @@ const AppSidebar = () => {
   const unfoldable = useSelector((state) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state) => state.sidebarShow)
   const { socket } = useContext(SocketContext)
-  const [masterStatus, setMasterStatus] = useState({ online: false, rssi: -100, uptime: '00:00:00' })
+  const [masterStatus, setMasterStatus] = useState({
+    online: false,
+    rssi: -100,
+    uptime: '00:00:00',
+  })
 
   useEffect(() => {
     if (!socket) return
@@ -37,7 +39,7 @@ const AppSidebar = () => {
         setMasterStatus({
           online: data.data?.status === 'online',
           rssi: data.data?.rssi || -60, // Fallback if RSSI not in payload yet
-          uptime: data.data?.uptime || '00:00:00'
+          uptime: data.data?.uptime || '00:00:00',
         })
       }
     }
@@ -55,7 +57,7 @@ const AppSidebar = () => {
   return (
     <CSidebar
       className="custom-sidebar border-end"
-      // style={{ height: '50vh' }} 
+      // style={{ height: '50vh' }}
       colorScheme="light"
       position="fixed"
       unfoldable={unfoldable}
@@ -66,19 +68,19 @@ const AppSidebar = () => {
     >
       <CSidebarHeader className="border-bottom">
         <CSidebarBrand as={NavLink} to="/dashboard" className="text-decoration-none">
-           <div className="sidebar-brand-full">
-             <CIcon icon={cilSpeedometer} height={24} className="me-2" />
-             <div>
-               <div>Controlador Vuelo</div>
-             </div>
-           </div>
+          <div className="sidebar-brand-full">
+            <CIcon icon={cilSpeedometer} height={24} className="me-2" />
+            <div>
+              <div>Controlador Vuelo</div>
+            </div>
+          </div>
         </CSidebarBrand>
         <CCloseButton
           className="d-lg-none"
           onClick={() => dispatch({ type: 'set', sidebarShow: false })}
         />
       </CSidebarHeader>
-      
+
       <AppSidebarNav items={navigation} />
 
       <div className="sidebar-footer-custom">
@@ -88,11 +90,14 @@ const AppSidebar = () => {
         </div>
         <div className="uptime-counter d-flex align-items-center justify-content-between">
           <span>Signal: {masterStatus.rssi} dBm</span>
-          <CIcon icon={cilSignalCellular4} className={`text-${getSignalColor(masterStatus.rssi)}`} />
+          <CIcon
+            icon={cilSignalCellular4}
+            className={`text-${getSignalColor(masterStatus.rssi)}`}
+          />
         </div>
         <div className="uptime-bar">
-          <div 
-            className={`uptime-progress bg-${getSignalColor(masterStatus.rssi)}`} 
+          <div
+            className={`uptime-progress bg-${getSignalColor(masterStatus.rssi)}`}
             style={{ width: `${Math.max(0, 100 + masterStatus.rssi)}%` }}
           ></div>
         </div>

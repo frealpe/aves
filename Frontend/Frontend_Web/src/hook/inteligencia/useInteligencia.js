@@ -6,15 +6,14 @@ export const useInteligenciaStore = () => {
   ////////////////////////////////////////////////////////////////
   const envioMensajeIA = async (mensaje) => {
     try {
-      const datos = await envioMensaje(mensaje);
-      // console.log("Datos recibidos en el hook",datos); 
+      const datos = await envioMensaje(mensaje)
+      // console.log("Datos recibidos en el hook",datos);
       return datos
     } catch (error) {
       console.error('Error al cargar el historial:', error)
       throw error // Opcionalmente volver a lanzar el error para un maneenvioMensajejo adicional
     }
   }
-
 
   return {
     envioMensajeIA,

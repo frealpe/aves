@@ -1,3 +1,2 @@
-
-export * from './getEnvVariables';
-export * from './formatoFecha';
+export * from './getEnvVariables'
+export * from './formatoFecha'
