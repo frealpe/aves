@@ -1,23 +1,33 @@
+# Node.js
+**/node_modules/
+**/dist/
+**/build/
+.npm
+.eslintcache
+.stylelintcache
+
+# PlatformIO
+**/.pio/
+**/.vscode/
+
+# Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.env*
+
+# IDEs/Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+
 # Logs
-logs
+logs/
 *.log
 npm-debug.log*
-
-node_modules/
-**/node_modules/
-dist/
-dist-ssr/
-build/
-
-# Expo & Mobile
-.expo/
-android/
-ios/
-*.apk
-*.aab
-
-# Editor directories and files
-.vscode/
-.idea/
-.DS_Store
-*.sw?
+yarn-debug.log*
+yarn-error.log*
