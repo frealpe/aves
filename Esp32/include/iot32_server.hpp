@@ -7,6 +7,7 @@
 #include "iot32_wifi.hpp"
 #include "iotesp32.h"
 #include <Update.h>
+#include "fft_processing.hpp"
 
 bool cors = true;
 
@@ -700,6 +701,24 @@ void onWsEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 // -------------------------------------------------------------------
 // Enviar estados del sistema por WebSocket
 // -------------------------------------------------------------------
+void broadcastAudioFeatures(AudioFeatures features) {
+  StaticJsonDocument<256> doc;
+  doc["type"] = "event";
+  doc["source"] = "esp32";
+  doc["target"] = "mobile";
+  doc["action"] = "audio_features";
+  doc["timestamp"] = millis();
+
+  JsonObject payload = doc.createNestedObject("payload");
+  payload["dominant_freq"] = features.dominant_freq;
+  payload["amplitude"] = features.amplitude;
+  payload["spectral_energy"] = features.spectral_energy;
+
+  String output;
+  serializeJson(doc, output);
+  ws.textAll(output);
+}
+
 void broadcastSystemStatus() {
   StaticJsonDocument<256> doc;
   doc["type"] = "event";

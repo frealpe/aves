@@ -4,6 +4,7 @@ import { OrbitControls, Float, MeshDistortMaterial } from '@react-three/drei';
 import { Activity, Battery, Zap, Shield, ShoppingBag, Terminal, Wifi, WifiOff } from 'lucide-react';
 import useDeviceStore from '../../store/useDeviceStore';
 import wsManager from '../../lib/WebSocketManager';
+import NetworkGraph from '../../components/NetworkGraph';
 
 function TherianAvatar() {
     const isOnline = useDeviceStore((state) => state.isOnline);
@@ -43,7 +44,7 @@ function StatPanel({ title, value, icon: Icon, color }) {
 }
 
 const Dashboard = () => {
-    const { isOnline, voltage, rssi } = useDeviceStore();
+    const { isOnline, voltage, rssi, audioFeatures } = useDeviceStore();
     const [ip, setIp] = useState('192.168.4.1');
 
     const handleConnect = () => {
@@ -78,10 +79,17 @@ const Dashboard = () => {
             </aside>
 
             {/* Main View */}
-            <main className="main-view" style={{ position: 'relative', background: 'radial-gradient(circle at center, #1c2028 0%, #0b0e14 100%)', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(153,247,255,0.05)' }}>
-                <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-                    <TherianAvatar />
-                </Canvas>
+            <main className="main-view" style={{ position: 'relative', background: 'radial-gradient(circle at center, #1c2028 0%, #0b0e14 100%)', borderRadius: '24px', overflow: 'hidden', border: '1px solid rgba(153,247,255,0.05)', display: 'flex', flexDirection: 'column' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                    <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
+                        <TherianAvatar />
+                    </Canvas>
+                </div>
+
+                <div style={{ flex: 1, padding: '1rem', borderTop: '1px solid rgba(153,247,255,0.1)' }}>
+                    <span style={{ color: '#00f2ff', fontSize: '12px', fontFamily: 'monospace', marginBottom: '0.5rem', display: 'block' }}>SEEING BIRDSONG</span>
+                    <NetworkGraph features={audioFeatures} />
+                </div>
 
                 <div style={{ position: 'absolute', top: '1rem', left: '1rem', right: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', backgroundColor: 'rgba(0,0,0,0.6)', padding: '0.5rem 1rem', borderRadius: '12px', border: '1px solid rgba(153,247,255,0.2)' }}>
