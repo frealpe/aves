@@ -63,6 +63,17 @@ class WebSocketManager {
             case 'info':
                 console.log('NODE_INFO:', v);
                 break;
+            case 'event':
+                if (message.action === 'audio_features') {
+                    useDeviceStore.getState().setAudioFeatures(message.payload);
+                } else if (message.action === 'telemetry_data') {
+                    useDeviceStore.getState().setDeviceData({
+                        voltage: message.payload.bat / 20,
+                        rssi: message.payload.signal,
+                        battery: message.payload.bat
+                    });
+                }
+                break;
             default:
                 console.log('UNHANDLED_PACKET:', t, v);
         }

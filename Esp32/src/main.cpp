@@ -19,6 +19,9 @@
 #include "lv_mascot.hpp"
 #include <TFT_eSPI.h>
 #include <lvgl.h>
+#include "audio_capture.hpp"
+#include "fft_processing.hpp"
+#include "visualization.hpp"
 
 // -------------------------------------------------------------------
 // Objetos y Variables Globales LVGL
@@ -113,6 +116,11 @@ void setup() {
   // Inicializar Smart Badge
   lv_badge_init(lv_scr_act());
 
+  // Initialize Audio, FFT, and Visualization
+  audio_capture_init();
+  fft_init(512, SAMPLE_RATE);
+  visualization_init(&tft);
+
   log("[ INFO ] Setup completado");
 }
 // -------------------------------------------------------------------
@@ -129,6 +137,18 @@ void loop() {
 
   /* WebSocket Cleanup */
   ws.cleanupClients();
+
+  static unsigned long lastAudioProcess = 0;
+  if (millis() - lastAudioProcess > 50) { // ~20fps
+    lastAudioProcess = millis();
+    int16_t audio_buffer[512];
+    size_t bytes_read = capture_audio_buffer(audio_buffer, 512);
+    if (bytes_read > 0) {
+      AudioFeatures features = process_audio_fft(audio_buffer, 512);
+      update_audio_visualization(features); // Uncomment to draw graph on screen
+      broadcastAudioFeatures(features);
+    }
+  }
 
   /* Periodic System Status Broadcast (every 5 seconds) */
   static unsigned long lastWsBroadcast = 0;

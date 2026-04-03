@@ -26,6 +26,7 @@ import { Theme } from '../styles/Theme';
 import useAppWebSocket, { wsManager } from '../hook/useAppWebSocket';
 import useDeviceStore from '../store/useDeviceStore';
 import useBadge from '../hook/useBadge';
+import SoundGraph from '../components/SoundGraph';
 
 const XENON_IMG = require('../../assets/xenon_04.png');
 
@@ -642,6 +643,7 @@ const BadgePanel = ({ ip, onImageUploaded }) => {
 const HomeScreen = () => {
     const isOnline = useDeviceStore((s) => s.isConnected);
     const telemetry = useDeviceStore((s) => s.telemetry) || {};
+    const audioFeatures = useDeviceStore((s) => s.audioFeatures);
 
     const [ip, setIp] = useState('192.168.1.198');
     const [drawerOpen, setDrawerOpen] = useState(false);
@@ -753,6 +755,12 @@ const HomeScreen = () => {
                     <MetricCard label="VOLTAGE" value={isOnline ? '4.2V' : '--'} color={Theme.colors.primary} />
                     <MetricCard label="RESERVE" value={isOnline ? `${bat}%` : '--'} color={Theme.colors.primary} />
                     <MetricCard label="SIGNAL" value={isOnline ? `${signal}dBm` : '--'} color={Theme.colors.primary} />
+                </View>
+
+                {/* ── Sound Graph Visualization ── */}
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>SEEING BIRDSONG VISUALIZATION</Text>
+                    <SoundGraph features={audioFeatures} />
                 </View>
 
                 {/* ── HUD Botones de Acción ── */}

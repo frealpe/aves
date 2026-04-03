@@ -94,6 +94,8 @@ class WebSocketManager {
                 // Route message to appropriate store based on type/action
                 if (message.type === 'data' || (message.type === 'event' && message.action === 'telemetry_data')) {
                    useDeviceStore.getState().setTelemetry(message.payload || message.v);
+                } else if (message.type === 'event' && message.action === 'audio_features') {
+                   useDeviceStore.getState().setAudioFeatures(message.payload);
                 }
 
                 // Add more routing logic here (e.g. for chat, booking updates, etc.)
