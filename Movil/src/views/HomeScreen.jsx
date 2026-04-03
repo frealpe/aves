@@ -746,20 +746,6 @@ const HomeScreen = () => {
                         style={styles.petImage}
                         onError={() => setImageError(true)}
                     />
-                    <View style={styles.petOverlay}>
-                        <View style={styles.petTag}>
-                            <Text style={styles.petTagTxt}>PET_08 // V.04 THERIANWALK</Text>
-                        </View>
-                        <View style={styles.petStatus}>
-                            <Text style={styles.petName}>BADGE_PET</Text>
-                            <Text style={[styles.petLink, !isOnline && { color: Theme.colors.error }]}>
-                                {isOnline ? 'ACTIVE LINK ESTABLISHED' : 'LINK OFFLINE // NO SIGNAL'}
-                            </Text>
-                            <View style={styles.progressOuter}>
-                                <View style={[styles.progressInner, { width: isOnline ? '85%' : '0%' }]} />
-                            </View>
-                        </View>
-                    </View>
                 </View>
 
                 {/* ── HUD Telemetría ── */}
