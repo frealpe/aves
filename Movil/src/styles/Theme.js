@@ -1,17 +1,17 @@
 export const Theme = {
   colors: {
-    bg: '#0b0e14',        // Infinite Void
-    surface: '#0b0e14',   // Level 0 (The Void)
-    surfaceLow: '#10131a', // Level 1 (The Deck)
-    surfaceHigh: '#1c2028', // Level 2 (The Component)
-    surfaceBright: '#282c36', // Level 3 (The Overlay - Glass base)
-    primary: '#99f7ff',    // Neon Cyan (Bio-signal)
-    primaryDark: '#00f1fe',
-    secondary: '#c4dcfd',  // Cool Steel
-    accent: '#6fb5ff',     // Tertiary
-    text: '#ecedf6',       // On-Surface
-    textSecondary: '#a9abb3', // Muted Tech
-    error: '#ff716c',
+    bg: '#131313',        // Absolute Darkness
+    surface: '#131313',   // Level 0 (The Void)
+    surfaceLow: '#1f1f1f', // Level 1 (The Deck)
+    surfaceHigh: '#2a2a2a', // Level 2 (The Component)
+    surfaceBright: '#393939', // Level 3 (The Overlay - Glass base)
+    primary: '#e3b5ff',    // Electric Purple
+    primaryDark: '#a020f0',
+    secondary: '#ffffff',  
+    accent: '#ffb4ab',     // High Energy Red
+    text: '#e2e2e2',       // On-Surface
+    textSecondary: '#d1c1d7', // Muted Tech
+    error: '#ffb4ab',
     success: '#00e676',
     glass: 'rgba(255, 255, 255, 0.04)',
     glassBorder: 'rgba(153, 247, 255, 0.15)',

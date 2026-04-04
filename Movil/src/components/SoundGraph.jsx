@@ -1,109 +1,241 @@
-import React, { useRef, useMemo } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber/native';
-import { Sphere, Line } from '@react-three/drei/native';
-import * as THREE from 'three';
+import React, { useRef, useEffect, useState, useMemo } from 'react';
+import { View, StyleSheet, Dimensions } from 'react-native';
+import { Canvas, Circle, Line, Group, vec, Rect } from '@shopify/react-native-skia';
 
-const NUM_NODES = 8;
+const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const FOCAL_LENGTH = 500;
+const NUM_NODES = 150;
+const BANDS_COUNT = 16;
 
-const getColorForFrequency = (freq) => {
-    if (freq < 200) return '#9b59b6'; // Purple
-    if (freq < 2000) return '#f1c40f'; // Yellow
-    return '#e74c3c'; // Red
+const SPECTRAL_PALETTE = [
+    '#3a86ff', // Azul (Bajo)
+    '#00b4d8', // Cian
+    '#00f5d4', // Menta
+    '#55ff00', // Verde Lima
+    '#ccff00', // Amarillo Lima
+    '#fee440', // Amarillo
+    '#ffbe0b', // Ambar
+    '#fb5607', // Naranja
+    '#ff006e', // Magenta
+    '#d90429', // Rojo
+    '#ffffff'  // Blanco (Alto)
+];
+
+const getColorForBand = (idx) => {
+    const paletteIdx = Math.floor((idx / BANDS_COUNT) * SPECTRAL_PALETTE.length);
+    return SPECTRAL_PALETTE[Math.min(paletteIdx, SPECTRAL_PALETTE.length - 1)];
 };
 
-const NetworkNodes = ({ features }) => {
-    const nodes = useRef(Array.from({ length: NUM_NODES }).map(() => ({
-        position: new THREE.Vector3((Math.random() - 0.5) * 4, (Math.random() - 0.5) * 4, (Math.random() - 0.5) * 2),
-        velocity: new THREE.Vector3((Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05, (Math.random() - 0.5) * 0.05),
-        radius: 0.1,
-        targetRadius: 0.1,
-        color: '#3498db'
-    })));
+const COLOR_GRID = 'rgba(255, 255, 255, 0.05)';
 
-    useFrame(() => {
-        const targetRad = features ? Math.min(Math.max((features.amplitude || 0) / 1000, 0.1), 0.8) : 0.1;
-        const newColor = features ? getColorForFrequency(features.dominant_freq || 0) : '#3498db';
-
-        nodes.current[0].targetRadius = targetRad;
-        nodes.current[0].color = newColor;
-
-        for (let i = 0; i < NUM_NODES; i++) {
-            const node = nodes.current[i];
-
-            node.position.add(node.velocity);
-
-            // Bounds
-            if (node.position.x > 2 || node.position.x < -2) node.velocity.x *= -1;
-            if (node.position.y > 2 || node.position.y < -2) node.velocity.y *= -1;
-            if (node.position.z > 1 || node.position.z < -1) node.velocity.z *= -1;
-
-            // Radius transition
-            node.radius += (node.targetRadius - node.radius) * 0.1;
-
-            // Physics propagation
-            if (i > 0) {
-                node.targetRadius = nodes.current[0].targetRadius * 0.8;
-                node.color = nodes.current[0].color;
-
-                const prev = nodes.current[i - 1];
-                const dx = prev.position.x - node.position.x;
-                const dy = prev.position.y - node.position.y;
-                const dz = prev.position.z - node.position.z;
-
-                node.velocity.x += dx * 0.002;
-                node.velocity.y += dy * 0.002;
-                node.velocity.z += dz * 0.002;
-
-                node.velocity.multiplyScalar(0.98);
-            }
-        }
-    });
-
-    const lines = useMemo(() => {
-        const result = [];
-        for (let i = 0; i < NUM_NODES; i++) {
-            for (let j = i + 1; j < NUM_NODES; j++) {
-                result.push([i, j]);
-            }
-        }
-        return result;
-    }, []);
-
-    return (
-        <group>
-            {nodes.current.map((node, i) => (
-                <Sphere key={i} position={node.position} args={[node.radius, 16, 16]}>
-                    <meshStandardMaterial color={node.color} emissive={node.color} emissiveIntensity={0.5} roughness={0.2} metalness={0.8} />
-                </Sphere>
-            ))}
-            {lines.map(([i, j], idx) => {
-                const distance = nodes.current[i].position.distanceTo(nodes.current[j].position);
-                if (distance < 1.5) {
-                    return (
-                        <Line
-                            key={`line-${idx}`}
-                            points={[nodes.current[i].position, nodes.current[j].position]}
-                            color={nodes.current[i].color}
-                            lineWidth={1}
-                            transparent
-                            opacity={1 - (distance / 1.5)}
-                        />
-                    );
-                }
-                return null;
-            })}
-        </group>
-    );
-};
+const MAX_NODES = 300;
+const SCROLL_SPEED = 1.8;
+const SCAN_DEPTH = 60; // Cuántos nodos hacia atrás buscar conexiones
 
 const SoundGraph = ({ features }) => {
+    // 1. Buffer Circular de Nodos Dinámicos (Refs para 60fps)
+    const nodesRef = useRef([]);
+    const featuresRef = useRef(features);
+    const [renderTick, setRenderTick] = useState(0);
+
+    useEffect(() => {
+        featuresRef.current = features;
+    }, [features]);
+
+    useEffect(() => {
+        let frameId;
+
+        const loop = () => {
+            const bands = featuresRef.current?.bands || [];
+            const nodes = nodesRef.current;
+
+            // Encontrar banda dominante (Frecuencia)
+            let maxVal = 0;
+            let dominantIdx = -1;
+            for (let i = 0; i < BANDS_COUNT; i++) {
+                if (bands[i] > maxVal) {
+                    maxVal = bands[i];
+                    dominantIdx = i;
+                }
+            }
+
+            // Generar nuevo nodo si hay sonido suficiente (Ganancia x4)
+            if (maxVal > 0.05) {
+                const intensity = Math.min(maxVal / 1.5, 1.0);
+                const newNode = {
+                    id: Date.now() + Math.random(),
+                    x: 0,
+                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 1.3,
+                    z: (Math.random() - 0.5) * 500,
+                    bandIdx: dominantIdx,
+                    intensity,
+                    // Rotar colores para que no sea solo azul si el tono es bajo
+                    color: getColorForBand((dominantIdx + Math.floor(Date.now() / 1000)) % BANDS_COUNT),
+                    age: 0,
+                    dir: Math.random() > 0.5 ? 1 : -1 // Dirección aleatoria para centrar
+                };
+                nodes.unshift(newNode);
+                if (nodes.length > 180) nodes.pop(); // Líite 180 para 60fps
+            }
+
+            // Actualizar posiciones (Scroll Simétrico)
+            for (let i = 0; i < nodes.length; i++) {
+                nodes[i].x += 4.0 * nodes[i].dir; // Se abren desde el centro
+                nodes[i].age += 1;
+            }
+
+            setRenderTick(performance.now());
+            frameId = requestAnimationFrame(loop);
+        };
+
+        console.log("[SoundGraph] Seeing Birdsong 2.0: Red Fluida y Cromática");
+        frameId = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(frameId);
+    }, []);
+
+    // 2. Proyección 3D y Conexiones (Malla Viva)
+    const { projectedNodes, connections } = useMemo(() => {
+        const nodes = nodesRef.current;
+        const proj = [];
+        const lines = [];
+
+        const angle = renderTick * 0.0002;
+        const cosA = Math.cos(angle);
+        const sinA = Math.sin(angle);
+
+        // A. Proyectar Nodos (Wide Panoramic)
+        nodes.forEach((n, i) => {
+            const rx = (n.x * 1.2) * cosA - n.z * sinA;
+            const rz = (n.x * 1.2) * sinA + n.z * cosA;
+
+            const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
+            const px = SCREEN_W / 2 + rx * scale;
+            const py = SCREEN_H / 2 + (n.y + Math.sin(n.id) * 15) * scale; // Jitter sutil
+
+            const opacity = Math.max(0, 1 - n.age / 180);
+            if (opacity <= 0.01) return;
+
+            proj.push({ ...n, px, py, scale, opacity });
+        });
+
+        // B. Formación de Red (OPTIMIZADA)
+        for (let i = 0; i < proj.length; i++) {
+            const nodeA = proj[i];
+            let connCount = 0;
+            const maxConns = 6;
+
+            const limit = Math.min(i + 45, proj.length); // SCAN_DEPTH ligero (45)
+            for (let j = i + 1; j < limit; j++) {
+                const nodeB = proj[j];
+                let shouldConnect = false;
+                let strokeW = 1.0;
+
+                if (j === i + 1) {
+                    shouldConnect = true;
+                    strokeW = 2.4;
+                }
+                else if (Math.abs(nodeA.bandIdx - nodeB.bandIdx) <= 1 && connCount < 3) {
+                    shouldConnect = true;
+                    strokeW = 1.2;
+                }
+                else {
+                    const dx = nodeA.px - nodeB.px;
+                    const dy = nodeA.py - nodeB.py;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < 20000 && connCount < 2) {
+                        shouldConnect = true;
+                        strokeW = 0.8;
+                    }
+                }
+
+                if (shouldConnect) {
+                    lines.push({
+                        p1: vec(nodeA.px, nodeA.py),
+                        p2: vec(nodeB.px, nodeB.py),
+                        color: nodeA.color,
+                        opacity: Math.min(nodeA.opacity, nodeB.opacity) * 0.5,
+                        strokeW
+                    });
+                    connCount++;
+                }
+                if (connCount > maxConns) break;
+            }
+        }
+
+        return { projectedNodes: proj, connections: lines };
+    }, [renderTick]);
+
     return (
-        <Canvas camera={{ position: [0, 0, 5], fov: 60 }} style={{ height: 200, width: '100%', borderRadius: 16, overflow: 'hidden', backgroundColor: '#111' }}>
-            <ambientLight intensity={0.5} />
-            <pointLight position={[10, 10, 10]} />
-            <NetworkNodes features={features} />
-        </Canvas>
+        <View style={styles.container}>
+            <Canvas style={styles.canvasContainer}>
+                {/* Cuadrícula Sutil de Fondo (Perspectiva) */}
+                <Group opacity={0.03}>
+                    {[...Array(12)].map((_, i) => (
+                        <Line
+                            key={`h-${i}`}
+                            p1={vec(0, (i + 1) * SCREEN_H / 12)}
+                            p2={vec(SCREEN_W, (i + 1) * SCREEN_H / 12)}
+                            color="white" strokeWidth={0.5}
+                        />
+                    ))}
+                </Group>
+
+                {/* Red de Conexiones Densa */}
+                {connections.map((l, i) => (
+                    <Line
+                        key={`c-${i}`} p1={l.p1} p2={l.p2}
+                        color={l.color} opacity={l.opacity}
+                        strokeWidth={l.strokeW}
+                    />
+                ))}
+
+                {/* Nodos (Diseño Réplica) */}
+                {projectedNodes.map(n => {
+                    // Tamaño más agresivo (Réplica imagen)
+                    const size = (10 + n.intensity * 25) * n.scale;
+                    const labelVal = n.intensity.toFixed(2);
+
+                    return (
+                        <Group key={`n-${n.id}`} opacity={n.opacity}>
+                            {/* Cuadrado Exterior (Borde Blanco) */}
+                            <Rect
+                                x={n.px - size / 2}
+                                y={n.py - size / 2}
+                                width={size}
+                                height={size}
+                                color="white"
+                                style="stroke"
+                                strokeWidth={1.5}
+                            />
+                            {/* Centro de Color (Réplica) */}
+                            <Rect
+                                x={n.px - size / 4}
+                                y={n.py - size / 4}
+                                width={size / 2}
+                                height={size / 2}
+                                color={n.color}
+                                opacity={0.85}
+                            />
+                            {/* Indicador de Datos Sutil (Sin fuente externa) */}
+                            <Rect
+                                x={n.px + size / 2 + 2}
+                                y={n.py - size / 2}
+                                width={size * 0.4}
+                                height={2}
+                                color="white"
+                                opacity={0.3}
+                            />
+                        </Group>
+                    );
+                })}
+            </Canvas>
+        </View>
     );
 };
+
+const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: '#000000' },
+    canvasContainer: { width: SCREEN_W, height: SCREEN_H }
+});
 
 export default SoundGraph;
