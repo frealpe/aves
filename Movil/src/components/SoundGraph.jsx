@@ -65,7 +65,8 @@ const SoundGraph = ({ features }) => {
                 const newNode = {
                     id: Date.now() + Math.random(),
                     x: 0,
-                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 1.3,
+                    // Spread vertical total (2.2x) para ocupar toda la pantalla
+                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 2.2 + (Math.random() - 0.5) * 100,
                     z: (Math.random() - 0.5) * 500,
                     bandIdx: dominantIdx,
                     intensity,
@@ -88,7 +89,7 @@ const SoundGraph = ({ features }) => {
             frameId = requestAnimationFrame(loop);
         };
 
-        console.log("[SoundGraph] Seeing Birdsong 2.0: Red Fluida y Cromática");
+        console.log("[SoundGraph] Seeing Birdsong 2.0: Expansión Total");
         frameId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(frameId);
     }, []);
@@ -103,14 +104,14 @@ const SoundGraph = ({ features }) => {
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
 
-        // A. Proyectar Nodos (Wide Panoramic)
+        // A. Proyectar Nodos (Ultra-Wide + Ultra-Tall)
         nodes.forEach((n, i) => {
-            const rx = (n.x * 1.2) * cosA - n.z * sinA;
-            const rz = (n.x * 1.2) * sinA + n.z * cosA;
+            const rx = (n.x * 1.25) * cosA - n.z * sinA;
+            const rz = (n.x * 1.25) * sinA + n.z * cosA;
 
             const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
             const px = SCREEN_W / 2 + rx * scale;
-            const py = SCREEN_H / 2 + (n.y + Math.sin(n.id) * 15) * scale; // Jitter sutil
+            const py = SCREEN_H / 2 + (n.y * 1.8 + Math.sin(n.id) * 20) * scale; // Proyección más alta y orgánica
 
             const opacity = Math.max(0, 1 - n.age / 180);
             if (opacity <= 0.01) return;
@@ -142,7 +143,7 @@ const SoundGraph = ({ features }) => {
                     const dx = nodeA.px - nodeB.px;
                     const dy = nodeA.py - nodeB.py;
                     const distSq = dx * dx + dy * dy;
-                    if (distSq < 20000 && connCount < 2) {
+                    if (distSq < 25000 && connCount < 2) { // Rango distSq más amplio
                         shouldConnect = true;
                         strokeW = 0.8;
                     }
