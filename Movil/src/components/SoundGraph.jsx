@@ -190,7 +190,8 @@ const SoundGraph = ({ features }) => {
                 {connections.map((l, i) => (
                     <Line
                         key={`c-${i}`} p1={l.p1} p2={l.p2}
-                        color={l.color} opacity={l.opacity}
+                        color={l.color}
+                        opacity={l.opacity * 1.5} // Más vibrante
                         strokeWidth={l.strokeW}
                     />
                 ))}
@@ -198,12 +199,11 @@ const SoundGraph = ({ features }) => {
                 {/* Nodos (Diseño Réplica) */}
                 {projectedNodes.map(n => {
                     // Tamaño más agresivo (Réplica imagen)
-                    const size = (10 + n.intensity * 25) * n.scale;
-                    const labelVal = n.intensity.toFixed(2);
+                    const size = (12 + n.intensity * 30) * n.scale;
 
                     return (
                         <Group key={`n-${n.id}`} opacity={n.opacity}>
-                            {/* Cuadrado Exterior (Borde Blanco) */}
+                            {/* Cuadrado Exterior (Borde Blanco Sutil) */}
                             <Rect
                                 x={n.px - size / 2}
                                 y={n.py - size / 2}
@@ -211,25 +211,26 @@ const SoundGraph = ({ features }) => {
                                 height={size}
                                 color="white"
                                 style="stroke"
-                                strokeWidth={1.5}
+                                strokeWidth={1}
+                                opacity={0.5} // Borde más sutil para que el color mande
                             />
-                            {/* Centro de Color (Réplica) */}
+                            {/* Centro de Color (Manda sobre el blanco) */}
                             <Rect
-                                x={n.px - size / 4}
-                                y={n.py - size / 4}
-                                width={size / 2}
-                                height={size / 2}
+                                x={n.px - size * 0.4}
+                                y={n.py - size * 0.4}
+                                width={size * 0.8}
+                                height={size * 0.8}
                                 color={n.color}
-                                opacity={0.85}
+                                opacity={1.0} // Color sólido y nítido
                             />
-                            {/* Indicador de Datos Sutil (Sin fuente externa) */}
+                            {/* Indicador de Datos Sutil */}
                             <Rect
                                 x={n.px + size / 2 + 2}
                                 y={n.py - size / 2}
-                                width={size * 0.4}
+                                width={size * 0.5 * n.intensity}
                                 height={2}
-                                color="white"
-                                opacity={0.3}
+                                color={n.color}
+                                opacity={0.6}
                             />
                         </Group>
                     );
