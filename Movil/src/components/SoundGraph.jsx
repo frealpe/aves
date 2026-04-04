@@ -28,9 +28,9 @@ const getColorForBand = (idx) => {
 
 const COLOR_GRID = 'rgba(255, 255, 255, 0.05)';
 
-const MAX_NODES = 200;
+const MAX_NODES = 120; // Reduced for performance
 const DRIFT_SPEED = 0.5;
-const CONNECTION_MAX_DIST = 160;
+const CONNECTION_MAX_DIST = 150;
 
 const SoundGraph = ({ features }) => {
     // 1. Buffer Circular de Nodos Dinámicos (Refs para 60fps)
@@ -90,7 +90,7 @@ const SoundGraph = ({ features }) => {
                 nodes[i].z += nodes[i].drift.z;
                 nodes[i].age += 1;
 
-                if (nodes[i].age > 400) {
+                if (nodes[i].age > 240) { // Cycle memory faster
                     nodes.splice(i, 1);
                 }
             }
@@ -119,11 +119,11 @@ const SoundGraph = ({ features }) => {
             const rx = n.x * cosA - n.z * sinA;
             const rz = n.x * sinA + n.z * cosA;
 
-            const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 750);
+            const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 700);
             const px = SCREEN_W / 2 + rx * scale;
             const py = SCREEN_H / 2 + n.y * scale;
 
-            const opacity = Math.max(0, 1 - n.age / 400);
+            const opacity = Math.max(0, 1 - n.age / 240);
             if (opacity <= 0.01) return;
 
             proj.push({ ...n, px, py, scale, opacity });
@@ -136,9 +136,9 @@ const SoundGraph = ({ features }) => {
 
             // Dinamical limit on connections based on energy
             // HIGH ENERGY = MORE CONNECTIONS
-            let maxConns = nodeA.energy > 0.5 ? 8 : 4;
+            let maxConns = nodeA.energy > 0.5 ? 5 : 2;
 
-            const limit = Math.min(i + 40, proj.length);
+            const limit = Math.min(i + 20, proj.length); // Reducir complejidad O(n^2)
             for (let j = i + 1; j < limit; j++) {
                 const nodeB = proj[j];
                 let shouldConnect = false;
@@ -153,7 +153,7 @@ const SoundGraph = ({ features }) => {
                 // Conexiones por proximidad 3D (Cerebro)
                 if (distance3D < CONNECTION_MAX_DIST) {
                     shouldConnect = true;
-                    strokeW = Math.max(0.1, nodeA.intensity * 0.8);
+                    strokeW = Math.max(0.1, nodeA.intensity * 0.5);
                 }
 
                 if (shouldConnect) {
@@ -220,13 +220,12 @@ const SoundGraph = ({ features }) => {
                     />
                 ))}
 
-                {/* Nodos (Neuronas Brillantes) */}
+                {/* Nodos (Neuronas Brillantes Simplificadas) */}
                 {projectedNodes.map(n => {
-                    const size = (2 + n.intensity * 4) * n.scale;
+                    const size = (1.5 + n.intensity * 3) * n.scale;
 
                     return (
                         <Group key={`n-${n.id}`} opacity={n.opacity}>
-                            <BlurMask blur={3} style="inner" />
                             <Rect
                                 x={n.px - size / 2}
                                 y={n.py - size / 2}
@@ -234,13 +233,13 @@ const SoundGraph = ({ features }) => {
                                 height={size}
                                 color={n.color}
                             />
-                            {/* Halo de luz (Neuron Fire) */}
+                            {/* Halo simplificado */}
                             <Circle
                                 cx={n.px}
                                 cy={n.py}
-                                r={size * 1.5}
+                                r={size * 1.2}
                                 color={n.color}
-                                opacity={0.4}
+                                opacity={0.3}
                             />
                         </Group>
                     );
