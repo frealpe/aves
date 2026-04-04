@@ -59,9 +59,10 @@ const SoundGraph = ({ features }) => {
                 }
             }
 
-            // Generar nuevo nodo si hay sonido suficiente (Ganancia x4)
-            if (maxVal > 0.05) {
-                const intensity = Math.min(maxVal / 1.5, 1.0);
+            // Generar nuevo nodo si hay sonido (UMBRAL ULTRA-BAJO PARA EMULADOR: 0.005)
+            if (maxVal > 0.005) {
+                // Ganancia compensatoria para emulador (x3)
+                const intensity = Math.min((maxVal * 3) / 1.5, 1.0);
                 const newNode = {
                     id: Date.now() + Math.random(),
                     x: 0,
@@ -77,6 +78,9 @@ const SoundGraph = ({ features }) => {
                 };
                 nodes.unshift(newNode);
                 if (nodes.length > 180) nodes.pop(); // Líite 180 para 60fps
+
+                // Log de diagnóstico sutil para confirmar que está graficando
+                if (nodes.length % 50 === 0) console.log(`[SoundGraph] Graficando: maxVal=${maxVal.toFixed(4)}`);
             }
 
             // Actualizar posiciones (Scroll Simétrico)
