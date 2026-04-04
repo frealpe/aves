@@ -1,8 +1,9 @@
 import React, { useRef, useEffect, useState, useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Canvas, Circle, Line, Group, vec, Rect } from '@shopify/react-native-skia';
+import { Canvas, Circle, Line, Group, vec, Rect, Text, matchFont } from '@shopify/react-native-skia';
 
 const { width: SCREEN_W, height: SCREEN_H } = Dimensions.get('window');
+const FONT = matchFont({ fontSize: 10, fontStyle: { fontWeight: "bold" } });
 const FOCAL_LENGTH = 500;
 const NUM_NODES = 150;
 const BANDS_COUNT = 16;
@@ -219,42 +220,50 @@ const SoundGraph = ({ features }) => {
                     />
                 ))}
 
-                {/* Nodos (Diseño Réplica) */}
+                {/* Nodos (Glowing Spheres) */}
                 {projectedNodes.map(n => {
-                    // Tamaño más agresivo (Réplica imagen)
-                    const size = (12 + n.intensity * 30) * n.scale;
+                    const radius = ((12 + n.intensity * 30) * n.scale) / 2;
 
                     return (
                         <Group key={`n-${n.id}`} opacity={n.opacity}>
-                            {/* Cuadrado Exterior (Borde Blanco Sutil) */}
-                            <Rect
-                                x={n.px - size / 2}
-                                y={n.py - size / 2}
-                                width={size}
-                                height={size}
+                            {/* Glow halo */}
+                            <Circle
+                                cx={n.px}
+                                cy={n.py}
+                                r={radius * 1.5}
+                                color={n.color}
+                                opacity={0.3}
+                            />
+                            {/* Esfera central */}
+                            <Circle
+                                cx={n.px}
+                                cy={n.py}
+                                r={radius}
+                                color={n.color}
+                                opacity={1.0}
+                            />
+                            {/* Borde Blanco Sutil */}
+                            <Circle
+                                cx={n.px}
+                                cy={n.py}
+                                r={radius}
                                 color="white"
                                 style="stroke"
                                 strokeWidth={1}
                                 opacity={0.5}
                             />
-                            {/* Centro de Color Sólido (Manda) */}
-                            <Rect
-                                x={n.px - size * 0.4}
-                                y={n.py - size * 0.4}
-                                width={size * 0.8}
-                                height={size * 0.8}
-                                color={n.color}
-                                opacity={1.0}
-                            />
-                            {/* Telemetría Dinámica */}
-                            <Rect
-                                x={n.px + size / 2 + 2}
-                                y={n.py - size / 2}
-                                width={size * 0.6 * n.intensity}
-                                height={2}
-                                color={n.color}
-                                opacity={0.7}
-                            />
+
+                            {/* Floating technical label for high energy nodes */}
+                            {n.energy > 0.4 && FONT && (
+                                <Text
+                                    x={n.px + radius + 5}
+                                    y={n.py - radius - 5}
+                                    text={`${(n.freq / 1000).toFixed(2)}K`}
+                                    font={FONT}
+                                    color="white"
+                                    opacity={0.8}
+                                />
+                            )}
                         </Group>
                     );
                 })}
