@@ -1,0 +1,240 @@
+<<<<<<< SEARCH
+        const loop = () => {
+            const bands = featuresRef.current?.bands || [];
+            const nodes = nodesRef.current;
+
+            // Encontrar banda dominante (Frecuencia)
+            let maxVal = 0;
+            let dominantIdx = -1;
+            for (let i = 0; i < BANDS_COUNT; i++) {
+                if (bands[i] > maxVal) {
+                    maxVal = bands[i];
+                    dominantIdx = i;
+                }
+            }
+
+            // Generar nuevo nodo si hay sonido suficiente (Sensibilidad Máxima: 0.005)
+            if (maxVal > 0.005) {
+                const intensity = Math.min((maxVal * 4.5) / 1.5, 1.0);
+
+                // ROTACIÓN CROMÁTICA TEMPORAL: Para evitar que siempre sea azul si el ruido es bajo
+                // Sumamos un offset basado en el tiempo para que el color "fluya"
+                const timeColorOffset = Math.floor(Date.now() / 2000) % BANDS_COUNT;
+                const finalColorIdx = (dominantIdx + timeColorOffset) % BANDS_COUNT;
+
+                const newNode = {
+                    id: Date.now() + Math.random(),
+                    x: 0,
+                    // Spread vertical moderado (0.8x) para mantenerlo centrado
+                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 0.8 + (Math.random() - 0.5) * 50,
+                    z: (Math.random() - 0.5) * 500,
+                    bandIdx: dominantIdx,
+                    intensity,
+                    // Color espectral vibrante y rotativo
+                    color: getColorForBand(finalColorIdx),
+                    age: 0,
+                    side: Math.random() > 0.5 ? 1 : -1 // Expansión lateral
+                };
+                nodes.unshift(newNode);
+                if (nodes.length > 300) nodes.pop();
+            }
+
+            // Actualizar posiciones (Scroll Orgánico y Suave)
+            for (let i = 0; i < nodes.length; i++) {
+                nodes[i].x += 2.8;
+                nodes[i].age += 1;
+            }
+
+            setRenderTick(performance.now());
+            frameId = requestAnimationFrame(loop);
+        };
+=======
+        const loop = () => {
+            const features = featuresRef.current;
+            const nodes = nodesRef.current;
+
+            // Limit on number of active nodes
+            const maxNodes = 300;
+            const MAX_FREQ = 8000; // max expected freq to normalise
+
+            // Create a node based on real time audio
+            if (features && features.amplitude > 0.005) {
+                const energy = features.amplitude;
+                const freq = features.dominant_freq || 0;
+
+                // Normalise freq to screen Y
+                // Using log scale mapping can feel more natural, but simple linear bounded first:
+                const boundedFreq = Math.min(Math.max(freq, 20), MAX_FREQ);
+                // Invert so high frequency is higher up (y = 0)
+                const yPos = (1 - (boundedFreq / MAX_FREQ)) * SCREEN_H * 0.8 + (SCREEN_H * 0.1);
+
+                // Color based on frequency
+                const bandIdx = Math.floor((boundedFreq / MAX_FREQ) * BANDS_COUNT);
+                const finalColorIdx = Math.min(bandIdx, BANDS_COUNT - 1);
+
+                const newNode = {
+                    id: Date.now() + Math.random(),
+                    x: 0, // start at right or left? In projection, positive x goes right.
+                    y: yPos - SCREEN_H / 2, // Centered around 0 for projection
+                    z: 0, // simplified 3D
+                    freq: boundedFreq,
+                    energy: energy,
+                    intensity: Math.min(energy * 2.0, 1.0),
+                    color: getColorForBand(finalColorIdx),
+                    age: 0
+                };
+                nodes.unshift(newNode);
+                if (nodes.length > maxNodes) {
+                    nodes.pop();
+                }
+            }
+
+            // Scroll x positions
+            for (let i = nodes.length - 1; i >= 0; i--) {
+                // move left (simulate scroll over time)
+                nodes[i].x -= SCROLL_SPEED * 2.0;
+                nodes[i].age += 1;
+
+                // Auto cleanup old nodes
+                if (nodes[i].age > 300) {
+                    nodes.splice(i, 1);
+                }
+            }
+
+            setRenderTick(performance.now());
+            frameId = requestAnimationFrame(loop);
+        };
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        // A. Proyectar Nodos (Wide Panoramic Balanceado)
+        nodes.forEach((n, i) => {
+            // Factor 1.2 es ideal para 1080p
+            const rx = (n.x * 1.2 * n.side) * cosA - n.z * sinA;
+            const rz = (n.x * 1.2 * n.side) * sinA + n.z * cosA;
+
+            const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
+            const px = SCREEN_W / 2 + rx * scale;
+            // BAJAR LA GRAFICA (Suma de 250*scale para centrado visual perfecto en el móvil)
+            const py = SCREEN_H / 2 + (n.y + 250 + Math.sin(n.id) * 15) * scale;
+
+            const opacity = Math.max(0, 1 - n.age / 300);
+            if (opacity <= 0.01) return;
+
+            proj.push({ ...n, px, py, scale, opacity });
+        });
+
+        // B. Formación de Red (OPTIMIZADA)
+        for (let i = 0; i < proj.length; i++) {
+            const nodeA = proj[i];
+            let connCount = 0;
+            const maxConns = 8;
+
+            const limit = Math.min(i + 45, proj.length);
+            for (let j = i + 1; j < limit; j++) {
+                const nodeB = proj[j];
+                let shouldConnect = false;
+                let strokeW = 1.0;
+
+                if (j === i + 1) {
+                    shouldConnect = true;
+                    strokeW = 2.4;
+                }
+                else if (Math.abs(nodeA.bandIdx - nodeB.bandIdx) <= 1 && connCount < 3) {
+                    shouldConnect = true;
+                    strokeW = 1.2;
+                }
+                else {
+                    const dx = nodeA.px - nodeB.px;
+                    const dy = nodeA.py - nodeB.py;
+                    const distSq = dx * dx + dy * dy;
+                    if (distSq < 20000 && connCount < 3) {
+                        shouldConnect = true;
+                        strokeW = 0.8;
+                    }
+                }
+
+                if (shouldConnect) {
+                    lines.push({
+                        p1: vec(nodeA.px, nodeA.py),
+                        p2: vec(nodeB.px, nodeB.py),
+                        color: nodeA.color,
+                        opacity: Math.min(nodeA.opacity, nodeB.opacity) * 0.8, // Más vibrante
+                        strokeW
+                    });
+                    connCount++;
+                }
+                if (connCount > maxConns) break;
+            }
+        }
+=======
+        // A. Proyectar Nodos (Wide Panoramic Balanceado)
+        nodes.forEach((n, i) => {
+            // Simply use x and y without heavy rotation to keep the scroll feel
+            const rx = n.x;
+            const rz = 0;
+
+            const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
+            const px = SCREEN_W / 2 + rx * scale;
+            const py = SCREEN_H / 2 + (n.y + 250) * scale;
+
+            const opacity = Math.max(0, 1 - n.age / 300);
+            if (opacity <= 0.01) return;
+
+            proj.push({ ...n, px, py, scale, opacity });
+        });
+
+        // B. Formación de Red (Basado en Reglas)
+        for (let i = 0; i < proj.length; i++) {
+            const nodeA = proj[i];
+            let connCount = 0;
+
+            // Dinamical limit on connections based on energy
+            // HIGH ENERGY = MORE CONNECTIONS
+            let maxConns = nodeA.energy > 0.5 ? 8 : 4;
+
+            const limit = Math.min(i + 45, proj.length);
+            for (let j = i + 1; j < limit; j++) {
+                const nodeB = proj[j];
+                let shouldConnect = false;
+                let strokeW = 1.0;
+
+                const dx = nodeA.px - nodeB.px;
+                const dy = nodeA.py - nodeB.py;
+                const distSq = dx * dx + dy * dy;
+                const distance = Math.sqrt(distSq);
+
+                // 1. CONEXIÓN TEMPORAL (BASE)
+                // node[i] -> node[i+1] (since nodes are unshifted)
+                if (j === i + 1) {
+                    shouldConnect = true;
+                    strokeW = Math.max(1.0, nodeA.energy * 5);
+                }
+                // 2. CONEXIONES POR SIMILITUD
+                else if (Math.abs(nodeA.freq - nodeB.freq) < 300 && connCount < maxConns - 1) {
+                    shouldConnect = true;
+                    strokeW = Math.max(0.5, nodeA.energy * 3);
+                }
+                // 3. CONEXIONES POR PROXIMIDAD ESPACIAL
+                else if (distance < 100 && connCount < maxConns) {
+                    shouldConnect = true;
+                    strokeW = Math.max(0.2, nodeA.energy * 2);
+                }
+                // 4. CONEXIONES POR ENERGÍA (EVENTOS) - ya manejado permitiendo maxConns mayor
+
+                if (shouldConnect) {
+                    // Opacity inversamente proporcional a la distancia
+                    const distOpacity = Math.max(0.1, 1 - (distance / 250));
+
+                    lines.push({
+                        p1: vec(nodeA.px, nodeA.py),
+                        p2: vec(nodeB.px, nodeB.py),
+                        color: nodeA.color,
+                        opacity: Math.min(nodeA.opacity, nodeB.opacity) * distOpacity,
+                        strokeW
+                    });
+                    connCount++;
+                }
+                if (connCount >= maxConns) break;
+            }
+        }
+>>>>>>> REPLACE
