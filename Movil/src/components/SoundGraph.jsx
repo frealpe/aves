@@ -104,6 +104,11 @@ const SoundGraph = ({ features }) => {
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
 
+        if (nodes.length === 0) {
+            // Nodo de DEPURAICON FORCE
+            proj.push({ id: 'debug', px: SCREEN_W / 2, py: SCREEN_H / 2, scale: 2, opacity: 1, color: 'red', intensity: 1 });
+        }
+
         // A. Proyectar Nodos (Wide Panoramic Balanceado)
         nodes.forEach((n, i) => {
             // Factor 1.4 es más seguro para 1080p y evitar salirse de pantalla
@@ -162,6 +167,10 @@ const SoundGraph = ({ features }) => {
                 }
                 if (connCount > maxConns) break;
             }
+        }
+
+        if (renderTick % 100 < 1) {
+            console.log(`[SoundGraph] Telemetría: Nodos=${nodes.length}, Proyectados=${proj.length}, Conexiones=${lines.length}, W=${SCREEN_W}, H=${SCREEN_H}`);
         }
 
         return { projectedNodes: proj, connections: lines };
