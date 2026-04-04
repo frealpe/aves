@@ -59,33 +59,28 @@ const SoundGraph = ({ features }) => {
                 }
             }
 
-            // Generar nuevo nodo si hay sonido (UMBRAL ULTRA-BAJO PARA EMULADOR: 0.005)
-            if (maxVal > 0.005) {
-                // Ganancia compensatoria para emulador (x3)
-                const intensity = Math.min((maxVal * 3) / 1.5, 1.0);
+            // Generar nuevo nodo si hay sonido suficiente (Umbral equilibrado: 0.01)
+            if (maxVal > 0.01) {
+                const intensity = Math.min((maxVal * 2.5) / 1.5, 1.0);
                 const newNode = {
                     id: Date.now() + Math.random(),
                     x: 0,
-                    // Spread vertical total (2.2x) para ocupar toda la pantalla
-                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 2.2 + (Math.random() - 0.5) * 100,
+                    // Spread vertical total para ocupar toda la pantalla
+                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 2.2 + (Math.random() - 0.5) * 80,
                     z: (Math.random() - 0.5) * 500,
                     bandIdx: dominantIdx,
                     intensity,
-                    // Rotar colores para que no sea solo azul si el tono es bajo
-                    color: getColorForBand((dominantIdx + Math.floor(Date.now() / 1000)) % BANDS_COUNT),
-                    age: 0,
-                    dir: Math.random() > 0.5 ? 1 : -1 // Dirección aleatoria para centrar
+                    // Color espectral nítido
+                    color: getColorForBand(dominantIdx),
+                    age: 0
                 };
                 nodes.unshift(newNode);
-                if (nodes.length > 180) nodes.pop(); // Líite 180 para 60fps
-
-                // Log de diagnóstico sutil para confirmar que está graficando
-                if (nodes.length % 50 === 0) console.log(`[SoundGraph] Graficando: maxVal=${maxVal.toFixed(4)}`);
+                if (nodes.length > 300) nodes.pop(); // Volver a 300 para densidad
             }
 
-            // Actualizar posiciones (Scroll Simétrico)
+            // Actualizar posiciones (Scroll Unidireccional - "Como antes")
             for (let i = 0; i < nodes.length; i++) {
-                nodes[i].x += 4.0 * nodes[i].dir; // Se abren desde el centro
+                nodes[i].x += 4.5;
                 nodes[i].age += 1;
             }
 
@@ -93,7 +88,7 @@ const SoundGraph = ({ features }) => {
             frameId = requestAnimationFrame(loop);
         };
 
-        console.log("[SoundGraph] Seeing Birdsong 2.0: Expansión Total");
+        console.log("[SoundGraph] Seeing Birdsong 2.0: Restauración Visual");
         frameId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(frameId);
     }, []);
@@ -110,14 +105,15 @@ const SoundGraph = ({ features }) => {
 
         // A. Proyectar Nodos (Ultra-Wide + Ultra-Tall)
         nodes.forEach((n, i) => {
-            const rx = (n.x * 1.25) * cosA - n.z * sinA;
-            const rz = (n.x * 1.25) * sinA + n.z * cosA;
+            // Factor 2.2 para amplitud panorámica
+            const rx = (n.x * 2.2) * cosA - n.z * sinA;
+            const rz = (n.x * 2.2) * sinA + n.z * cosA;
 
             const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
             const px = SCREEN_W / 2 + rx * scale;
-            const py = SCREEN_H / 2 + (n.y * 1.8 + Math.sin(n.id) * 20) * scale; // Proyección más alta y orgánica
+            const py = SCREEN_H / 2 + (n.y * 1.8 + Math.sin(n.id) * 20) * scale;
 
-            const opacity = Math.max(0, 1 - n.age / 180);
+            const opacity = Math.max(0, 1 - n.age / 300);
             if (opacity <= 0.01) return;
 
             proj.push({ ...n, px, py, scale, opacity });
@@ -127,9 +123,9 @@ const SoundGraph = ({ features }) => {
         for (let i = 0; i < proj.length; i++) {
             const nodeA = proj[i];
             let connCount = 0;
-            const maxConns = 6;
+            const maxConns = 8;
 
-            const limit = Math.min(i + 45, proj.length); // SCAN_DEPTH ligero (45)
+            const limit = Math.min(i + 60, proj.length); // SCAN_DEPTH equilibrado (60)
             for (let j = i + 1; j < limit; j++) {
                 const nodeB = proj[j];
                 let shouldConnect = false;
@@ -147,7 +143,7 @@ const SoundGraph = ({ features }) => {
                     const dx = nodeA.px - nodeB.px;
                     const dy = nodeA.py - nodeB.py;
                     const distSq = dx * dx + dy * dy;
-                    if (distSq < 25000 && connCount < 2) { // Rango distSq más amplio
+                    if (distSq < 25000 && connCount < 3) {
                         shouldConnect = true;
                         strokeW = 0.8;
                     }
