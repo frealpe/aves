@@ -65,8 +65,8 @@ const SoundGraph = ({ features }) => {
                 const newNode = {
                     id: Date.now() + Math.random(),
                     x: 0,
-                    // Spread vertical total para ocupar toda la pantalla
-                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 2.2 + (Math.random() - 0.5) * 60,
+                    // Spread vertical moderado (0.8x) para mantenerlo centrado
+                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 0.8 + (Math.random() - 0.5) * 50,
                     z: (Math.random() - 0.5) * 500,
                     bandIdx: dominantIdx,
                     intensity,
@@ -89,7 +89,7 @@ const SoundGraph = ({ features }) => {
             frameId = requestAnimationFrame(loop);
         };
 
-        console.log("[SoundGraph] Seeing Birdsong 2.0: Rescate de Visibilidad");
+        console.log("[SoundGraph] Seeing Birdsong 2.0: Centrado y Estética");
         frameId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(frameId);
     }, []);
@@ -104,11 +104,6 @@ const SoundGraph = ({ features }) => {
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
 
-        if (nodes.length < 5) {
-            // Nodo de DEPURAICON FORCE
-            proj.push({ id: 'debug', px: SCREEN_W / 2, py: SCREEN_H / 2, scale: 2, opacity: 1, color: 'red', intensity: 1 });
-        }
-
         // A. Proyectar Nodos (Wide Panoramic Balanceado)
         nodes.forEach((n, i) => {
             // Factor 0.8 es mucho más conservador para 1080p
@@ -117,7 +112,7 @@ const SoundGraph = ({ features }) => {
 
             const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
             const px = SCREEN_W / 2 + rx * scale;
-            const py = SCREEN_H / 2 + (n.y + Math.sin(n.id) * 20) * scale;
+            const py = SCREEN_H / 2 + (n.y * 1.5 + Math.sin(n.id) * 15) * scale;
 
             const opacity = Math.max(0, 1 - n.age / 300);
             if (opacity <= 0.01) return;
