@@ -104,20 +104,20 @@ const SoundGraph = ({ features }) => {
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
 
-        if (nodes.length === 0) {
+        if (nodes.length < 5) {
             // Nodo de DEPURAICON FORCE
             proj.push({ id: 'debug', px: SCREEN_W / 2, py: SCREEN_H / 2, scale: 2, opacity: 1, color: 'red', intensity: 1 });
         }
 
         // A. Proyectar Nodos (Wide Panoramic Balanceado)
         nodes.forEach((n, i) => {
-            // Factor 1.4 es más seguro para 1080p y evitar salirse de pantalla
-            const rx = (n.x * 1.4 * n.side) * cosA - n.z * sinA;
-            const rz = (n.x * 1.4 * n.side) * sinA + n.z * cosA;
+            // Factor 0.8 es mucho más conservador para 1080p
+            const rx = (n.x * 0.8 * n.side) * cosA - n.z * sinA;
+            const rz = (n.x * 0.8 * n.side) * sinA + n.z * cosA;
 
             const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
             const px = SCREEN_W / 2 + rx * scale;
-            const py = SCREEN_H / 2 + (n.y * 1.8 + Math.sin(n.id) * 20) * scale;
+            const py = SCREEN_H / 2 + (n.y + Math.sin(n.id) * 20) * scale;
 
             const opacity = Math.max(0, 1 - n.age / 300);
             if (opacity <= 0.01) return;
@@ -131,7 +131,7 @@ const SoundGraph = ({ features }) => {
             let connCount = 0;
             const maxConns = 8;
 
-            const limit = Math.min(i + 60, proj.length); // SCAN_DEPTH equilibrado (60)
+            const limit = Math.min(i + 45, proj.length); // SCAN_DEPTH equilibrado (60)
             for (let j = i + 1; j < limit; j++) {
                 const nodeB = proj[j];
                 let shouldConnect = false;
@@ -149,7 +149,7 @@ const SoundGraph = ({ features }) => {
                     const dx = nodeA.px - nodeB.px;
                     const dy = nodeA.py - nodeB.py;
                     const distSq = dx * dx + dy * dy;
-                    if (distSq < 25000 && connCount < 3) {
+                    if (distSq < 20000 && connCount < 3) {
                         shouldConnect = true;
                         strokeW = 0.8;
                     }
@@ -170,7 +170,7 @@ const SoundGraph = ({ features }) => {
         }
 
         if (renderTick % 100 < 1) {
-            console.log(`[SoundGraph] Telemetría: Nodos=${nodes.length}, Proyectados=${proj.length}, Conexiones=${lines.length}, W=${SCREEN_W}, H=${SCREEN_H}`);
+            console.log(`[SoundGraph] Telemetría: Nodos=${nodes.length}, Proyectados=${proj.length}, Conexiones=${lines.length}, W=${SCREEN_W}, H=${SCREEN_H}, yMid=${nodes[0]?.y.toFixed(0)}`);
         }
 
         return { projectedNodes: proj, connections: lines };
