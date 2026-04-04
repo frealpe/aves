@@ -61,7 +61,13 @@ const SoundGraph = ({ features }) => {
 
             // Generar nuevo nodo si hay sonido suficiente (Sensibilidad Máxima: 0.005)
             if (maxVal > 0.005) {
-                const intensity = Math.min((maxVal * 4.0) / 1.5, 1.0);
+                const intensity = Math.min((maxVal * 4.5) / 1.5, 1.0);
+
+                // ROTACIÓN CROMÁTICA TEMPORAL: Para evitar que siempre sea azul si el ruido es bajo
+                // Sumamos un offset basado en el tiempo para que el color "fluya"
+                const timeColorOffset = Math.floor(Date.now() / 2000) % BANDS_COUNT;
+                const finalColorIdx = (dominantIdx + timeColorOffset) % BANDS_COUNT;
+
                 const newNode = {
                     id: Date.now() + Math.random(),
                     x: 0,
@@ -70,18 +76,18 @@ const SoundGraph = ({ features }) => {
                     z: (Math.random() - 0.5) * 500,
                     bandIdx: dominantIdx,
                     intensity,
-                    // Color espectral vibrante
-                    color: getColorForBand(dominantIdx),
+                    // Color espectral vibrante y rotativo
+                    color: getColorForBand(finalColorIdx),
                     age: 0,
-                    side: Math.random() > 0.5 ? 1 : -1 // Amplitud en ambos lados
+                    side: Math.random() > 0.5 ? 1 : -1 // Expansión lateral
                 };
                 nodes.unshift(newNode);
                 if (nodes.length > 300) nodes.pop();
             }
 
-            // Actualizar posiciones (Scroll Orgánico y Lento)
+            // Actualizar posiciones (Scroll Orgánico y Suave)
             for (let i = 0; i < nodes.length; i++) {
-                nodes[i].x += 2.5; // Un poco más lento para que duren más en pantalla
+                nodes[i].x += 2.8;
                 nodes[i].age += 1;
             }
 
@@ -89,7 +95,7 @@ const SoundGraph = ({ features }) => {
             frameId = requestAnimationFrame(loop);
         };
 
-        console.log("[SoundGraph] Seeing Birdsong 2.0: Centrado y Estética");
+        console.log("[SoundGraph] Seeing Birdsong 2.0: Explosión de Color y Centrado");
         frameId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(frameId);
     }, []);
@@ -106,13 +112,14 @@ const SoundGraph = ({ features }) => {
 
         // A. Proyectar Nodos (Wide Panoramic Balanceado)
         nodes.forEach((n, i) => {
-            // Factor 0.8 es mucho más conservador para 1080p
-            const rx = (n.x * 0.8 * n.side) * cosA - n.z * sinA;
-            const rz = (n.x * 0.8 * n.side) * sinA + n.z * cosA;
+            // Factor 1.2 es ideal para 1080p
+            const rx = (n.x * 1.2 * n.side) * cosA - n.z * sinA;
+            const rz = (n.x * 1.2 * n.side) * sinA + n.z * cosA;
 
             const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
             const px = SCREEN_W / 2 + rx * scale;
-            const py = SCREEN_H / 2 + (n.y * 1.5 + Math.sin(n.id) * 15) * scale;
+            // BAJAR LA GRAFICA (Suma de 250*scale para centrado visual perfecto en el móvil)
+            const py = SCREEN_H / 2 + (n.y + 250 + Math.sin(n.id) * 15) * scale;
 
             const opacity = Math.max(0, 1 - n.age / 300);
             if (opacity <= 0.01) return;
@@ -126,7 +133,7 @@ const SoundGraph = ({ features }) => {
             let connCount = 0;
             const maxConns = 8;
 
-            const limit = Math.min(i + 45, proj.length); // SCAN_DEPTH equilibrado (60)
+            const limit = Math.min(i + 45, proj.length);
             for (let j = i + 1; j < limit; j++) {
                 const nodeB = proj[j];
                 let shouldConnect = false;
@@ -155,7 +162,7 @@ const SoundGraph = ({ features }) => {
                         p1: vec(nodeA.px, nodeA.py),
                         p2: vec(nodeB.px, nodeB.py),
                         color: nodeA.color,
-                        opacity: Math.min(nodeA.opacity, nodeB.opacity) * 0.5,
+                        opacity: Math.min(nodeA.opacity, nodeB.opacity) * 0.8, // Más vibrante
                         strokeW
                     });
                     connCount++;
@@ -165,7 +172,7 @@ const SoundGraph = ({ features }) => {
         }
 
         if (renderTick % 100 < 1) {
-            console.log(`[SoundGraph] Telemetría: Nodos=${nodes.length}, Proyectados=${proj.length}, Conexiones=${lines.length}, W=${SCREEN_W}, H=${SCREEN_H}, yMid=${nodes[0]?.y.toFixed(0)}`);
+            console.log(`[SoundGraph] Telemetría: Nodos=${nodes.length}, Proyectados=${proj.length}, W=${SCREEN_W}, H=${SCREEN_H}, yOffs=250`);
         }
 
         return { projectedNodes: proj, connections: lines };
@@ -191,7 +198,7 @@ const SoundGraph = ({ features }) => {
                     <Line
                         key={`c-${i}`} p1={l.p1} p2={l.p2}
                         color={l.color}
-                        opacity={l.opacity * 1.5} // Más vibrante
+                        opacity={l.opacity}
                         strokeWidth={l.strokeW}
                     />
                 ))}
@@ -212,25 +219,25 @@ const SoundGraph = ({ features }) => {
                                 color="white"
                                 style="stroke"
                                 strokeWidth={1}
-                                opacity={0.5} // Borde más sutil para que el color mande
+                                opacity={0.5}
                             />
-                            {/* Centro de Color (Manda sobre el blanco) */}
+                            {/* Centro de Color Sólido (Manda) */}
                             <Rect
                                 x={n.px - size * 0.4}
                                 y={n.py - size * 0.4}
                                 width={size * 0.8}
                                 height={size * 0.8}
                                 color={n.color}
-                                opacity={1.0} // Color sólido y nítido
+                                opacity={1.0}
                             />
-                            {/* Indicador de Datos Sutil */}
+                            {/* Telemetría Dinámica */}
                             <Rect
                                 x={n.px + size / 2 + 2}
                                 y={n.py - size / 2}
-                                width={size * 0.5 * n.intensity}
+                                width={size * 0.6 * n.intensity}
                                 height={2}
                                 color={n.color}
-                                opacity={0.6}
+                                opacity={0.7}
                             />
                         </Group>
                     );
