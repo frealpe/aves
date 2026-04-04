@@ -59,28 +59,29 @@ const SoundGraph = ({ features }) => {
                 }
             }
 
-            // Generar nuevo nodo si hay sonido suficiente (Umbral equilibrado: 0.01)
-            if (maxVal > 0.01) {
-                const intensity = Math.min((maxVal * 2.5) / 1.5, 1.0);
+            // Generar nuevo nodo si hay sonido suficiente (Sensibilidad Máxima: 0.005)
+            if (maxVal > 0.005) {
+                const intensity = Math.min((maxVal * 4.0) / 1.5, 1.0);
                 const newNode = {
                     id: Date.now() + Math.random(),
                     x: 0,
                     // Spread vertical total para ocupar toda la pantalla
-                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 2.2 + (Math.random() - 0.5) * 80,
+                    y: (dominantIdx / BANDS_COUNT - 0.5) * SCREEN_H * 2.2 + (Math.random() - 0.5) * 60,
                     z: (Math.random() - 0.5) * 500,
                     bandIdx: dominantIdx,
                     intensity,
-                    // Color espectral nítido
+                    // Color espectral vibrante
                     color: getColorForBand(dominantIdx),
-                    age: 0
+                    age: 0,
+                    side: Math.random() > 0.5 ? 1 : -1 // Amplitud en ambos lados
                 };
                 nodes.unshift(newNode);
-                if (nodes.length > 300) nodes.pop(); // Volver a 300 para densidad
+                if (nodes.length > 300) nodes.pop();
             }
 
-            // Actualizar posiciones (Scroll Unidireccional - "Como antes")
+            // Actualizar posiciones (Scroll Orgánico y Lento)
             for (let i = 0; i < nodes.length; i++) {
-                nodes[i].x += 4.5;
+                nodes[i].x += 2.5; // Un poco más lento para que duren más en pantalla
                 nodes[i].age += 1;
             }
 
@@ -88,7 +89,7 @@ const SoundGraph = ({ features }) => {
             frameId = requestAnimationFrame(loop);
         };
 
-        console.log("[SoundGraph] Seeing Birdsong 2.0: Restauración Visual");
+        console.log("[SoundGraph] Seeing Birdsong 2.0: Rescate de Visibilidad");
         frameId = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(frameId);
     }, []);
@@ -103,11 +104,11 @@ const SoundGraph = ({ features }) => {
         const cosA = Math.cos(angle);
         const sinA = Math.sin(angle);
 
-        // A. Proyectar Nodos (Ultra-Wide + Ultra-Tall)
+        // A. Proyectar Nodos (Wide Panoramic Balanceado)
         nodes.forEach((n, i) => {
-            // Factor 2.2 para amplitud panorámica
-            const rx = (n.x * 2.2) * cosA - n.z * sinA;
-            const rz = (n.x * 2.2) * sinA + n.z * cosA;
+            // Factor 1.4 es más seguro para 1080p y evitar salirse de pantalla
+            const rx = (n.x * 1.4 * n.side) * cosA - n.z * sinA;
+            const rz = (n.x * 1.4 * n.side) * sinA + n.z * cosA;
 
             const scale = FOCAL_LENGTH / (FOCAL_LENGTH + rz + 650);
             const px = SCREEN_W / 2 + rx * scale;
